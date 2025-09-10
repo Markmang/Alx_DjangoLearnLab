@@ -152,3 +152,6 @@ CSP_IMG_SRC = ("'self'",)
 
 # Redirect all non-HTTPS requests to HTTPS
 SECURE_SSL_REDIRECT = True
+
+# Tell Django the request is secure when behind a proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
