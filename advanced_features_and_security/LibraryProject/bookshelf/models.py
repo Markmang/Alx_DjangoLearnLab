@@ -5,12 +5,23 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class Book(models.Model):
     title = models.CharField(max_length=200)
-    author = models.CharField(max_length=100)
-    publication_year = models.IntegerField()
+    author = models.CharField(max_length=200)
+    published_date = models.DateField()
+
+    class Meta:
+        permissions = [
+            ("can_view", "Can View Book"),
+            ("can_create", "Can Create Book"),
+            ("can_edit", "Can Edit Book"),
+            ("can_delete", "Can Delete Book"),
+        ]
 
     def __str__(self):
-        return f"{self.title} by {self.author} ({self.publication_year})"
+        return self.title
 
+    @property
+    def publication_year(self):
+        return self.published_date.year if self.published_date else None
 
 # --- Custom User Manager ---
 class CustomUserManager(BaseUserManager):
@@ -40,3 +51,4 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
