@@ -38,4 +38,4 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Author
-        fields = ['name', 'books']  # only include name and nested books
+        fields = ['name', 'books']  # Include name and nested books
