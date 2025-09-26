@@ -1,20 +1,19 @@
 from rest_framework import generics, filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from django_filters import rest_framework as drf_filters
 from .models import Book
 from .serializers import BookSerializer
-from django_filters.rest_framework import DjangoFilterBackend
 
 
-# List all books (read-only for unauthenticated users, full access for logged-in users)
 class BookListView(generics.ListAPIView):
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     # Advanced filtering, searching, ordering
     filter_backends = [
-        DjangoFilterBackend,
+        drf_filters.DjangoFilterBackend,
         filters.SearchFilter,
-        filters.OrderingFilter
+        filters.OrderingFilter,
     ]
 
     # For DjangoFilterBackend
