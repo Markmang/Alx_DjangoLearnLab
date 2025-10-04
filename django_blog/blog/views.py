@@ -163,6 +163,15 @@ def search(request):
     return render(request, 'blog/search_results.html', {'query': q, 'results': results})
 
 # Posts by tag
-def posts_by_tag(request, tag_name):
-    posts = Post.objects.filter(tags__name__iexact=tag_name).distinct()
-    return render(request, 'blog/tag_list.html', {'tag_name': tag_name, 'posts': posts})
+class PostByTagListView(ListView):
+    model = Post
+    template_name = "blog/tag_list.html"
+    context_object_name = "posts"
+
+    def get_queryset(self):
+        return Post.objects.filter(tags__slug=self.kwargs["tag_slug"]).distinct()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tag_slug"] = self.kwargs["tag_slug"]
+        return context
