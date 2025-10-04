@@ -14,7 +14,8 @@ from django.views.generic import UpdateView, DeleteView
 from django.urls import reverse_lazy
 from .models import Post, Comment
 from .forms import CommentForm
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
 
 
 
@@ -135,4 +136,20 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy("post-detail", kwargs={"pk": self.object.post.id})
+
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment_form.html"
+
+    def form_valid(self, form):
+        # attach the comment to the correct post and user
+        post = get_object_or_404(Post, pk=self.kwargs["pk"])
+        form.instance.post = post
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        # after adding a comment, redirect back to the post detail
+        return reverse("post-detail", kwargs={"pk": self.kwargs["pk"]})
 
