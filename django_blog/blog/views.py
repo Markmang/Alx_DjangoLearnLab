@@ -143,13 +143,26 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     template_name = "blog/comment_form.html"
 
     def form_valid(self, form):
-        # attach the comment to the correct post and user
         post = get_object_or_404(Post, pk=self.kwargs["pk"])
         form.instance.post = post
         form.instance.author = self.request.user
         return super().form_valid(form)
 
     def get_success_url(self):
-        # after adding a comment, redirect back to the post detail
         return reverse("post-detail", kwargs={"pk": self.kwargs["pk"]})
+# Search view
+def search(request):
+    q = request.GET.get('q', '').strip()
+    results = Post.objects.none()
+    if q:
+        results = Post.objects.filter(
+            Q(title__icontains=q) |
+            Q(content__icontains=q) |
+            Q(tags__name__icontains=q)
+        ).distinct()
+    return render(request, 'blog/search_results.html', {'query': q, 'results': results})
 
+# Posts by tag
+def posts_by_tag(request, tag_name):
+    posts = Post.objects.filter(tags__name__iexact=tag_name).distinct()
+    return render(request, 'blog/tag_list.html', {'tag_name': tag_name, 'posts': posts})

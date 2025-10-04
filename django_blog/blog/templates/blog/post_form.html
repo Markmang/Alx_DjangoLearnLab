@@ -4,3 +4,22 @@
   {{ form.as_p }}
   <button type="submit">Save</button>
 </form>
+<h2>{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <p>
+        {{ form.title.label_tag }}<br>
+        {{ form.title }}
+    </p>
+    <p>
+        {{ form.content.label_tag }}<br>
+        {{ form.content }}
+    </p>
+    <p>
+        {{ form.tags.label_tag }}<br>
+        {{ form.tags }}
+        <small>Enter tags separated by commas.</small>
+    </p>
+    <button type="submit">Save</button>
+</form>
