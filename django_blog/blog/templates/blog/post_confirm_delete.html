@@ -1,0 +1,6 @@
+<!-- blog/templates/blog/post_confirm_delete.html -->
+<form method="post">
+  {% csrf_token %}
+  <p>Delete "{{ object.title }}"?</p>
+  <button type="submit">Confirm</button>
+</form>
