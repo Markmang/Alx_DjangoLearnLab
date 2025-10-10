@@ -4,12 +4,10 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.contrib.auth import get_user_model
-from .serializers import RegisterSerializer, UserSerializer
 from django.shortcuts import get_object_or_404
-from .models import User
-from rest_framework.decorators import api_view, permission_classes
+from .serializers import RegisterSerializer, UserSerializer
 
-User = get_user_model()
+CustomUser = get_user_model()
 
 
 class RegisterView(APIView):
@@ -44,28 +42,36 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def follow_user(request, user_id):
-    target = get_object_or_404(User, id=user_id)
-    current = request.user
 
-    if target == current:
-        return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+# Follow user view
+class FollowUserView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
 
-    # Add target to current.following
-    current.following.add(target)
-    return Response({"detail": f"You are now following {target.username}."}, status=status.HTTP_200_OK)
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        current_user = request.user
+
+        if target_user == current_user:
+            return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user.following.add(target_user)
+        return Response({"detail": f"You are now following {target_user.username}."}, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def unfollow_user(request, user_id):
-    target = get_object_or_404(User, id=user_id)
-    current = request.user
+# Unfollow user view
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
 
-    if target == current:
-        return Response({"detail": "You cannot unfollow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
+        current_user = request.user
 
-    current.following.remove(target)
-    return Response({"detail": f"You have unfollowed {target.username}."}, status=status.HTTP_200_OK)
+        if target_user == current_user:
+            return Response({"detail": "You cannot unfollow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        current_user.following.remove(target_user)
+        return Response({"detail": f"You have unfollowed {target_user.username}."}, status=status.HTTP_200_OK)
