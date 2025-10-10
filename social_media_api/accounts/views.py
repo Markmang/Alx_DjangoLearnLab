@@ -6,6 +6,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from .serializers import RegisterSerializer, UserSerializer
+from notifications.utils import create_notification
 
 CustomUser = get_user_model()
 
@@ -57,6 +58,12 @@ class FollowUserView(generics.GenericAPIView):
             return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
         current_user.following.add(target_user)
+        create_notification(
+            recipient=target_user,
+            actor=current_user,
+            verb="started following you",
+            target=current_user
+        )
         return Response({"detail": f"You are now following {target_user.username}."}, status=status.HTTP_200_OK)
 
 

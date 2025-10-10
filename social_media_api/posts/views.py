@@ -4,6 +4,12 @@ from rest_framework.pagination import PageNumberPagination
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 from django.db.models import Q
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+from .models import Like
+from notifications.utils import create_notification
+
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -62,3 +68,28 @@ class FeedView(generics.ListAPIView):
         if not following_users.exists():
             return Post.objects.none()
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
+
+from rest_framework.views import APIView
+
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+        like, created = Like.objects.get_or_create(post=post, user=user)
+        if not created:
+            return Response({"detail": "You have already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
+        create_notification(recipient=post.author, actor=user, verb='liked your post', target=post)
+        return Response({"detail": "Post liked."}, status=status.HTTP_201_CREATED)
+
+class UnlikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+        deleted, _ = Like.objects.filter(post=post, user=user).delete()
+        if not deleted:
+            return Response({"detail": "You have not liked this post."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Like removed."}, status=status.HTTP_200_OK)
