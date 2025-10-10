@@ -58,8 +58,7 @@ class FeedView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         # If user follows nobody, return empty queryset
-        following_qs = user.following.all()
-        if not following_qs.exists():
+        following_users = user.following.all()
+        if not following_users.exists():
             return Post.objects.none()
-        # Posts authored by users the current user follows
-        return Post.objects.filter(author__in=following_qs).order_by('-created_at')
+        return Post.objects.filter(author__in=following_users).order_by('-created_at')
