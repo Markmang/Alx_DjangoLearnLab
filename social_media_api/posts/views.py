@@ -1,8 +1,10 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.pagination import PageNumberPagination
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
+from django.db.models import Q
+
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
@@ -15,12 +17,10 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         # Write permissions only to the owner
         return obj.author == request.user
 
-
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 5
+    page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 50
-
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
@@ -43,3 +43,23 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+
+
+class FeedView(generics.ListAPIView):
+    """
+    Returns posts from users the current user follows, newest first.
+    """
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'content']
+
+    def get_queryset(self):
+        user = self.request.user
+        # If user follows nobody, return empty queryset
+        following_qs = user.following.all()
+        if not following_qs.exists():
+            return Post.objects.none()
+        # Posts authored by users the current user follows
+        return Post.objects.filter(author__in=following_qs).order_by('-created_at')
